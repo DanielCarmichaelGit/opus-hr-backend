@@ -3,10 +3,13 @@ const router = express.Router();
 const User = require("../models/user");
 const { hashPassword, comparePassword } = require('../utils/passwordUtils');
 const generateToken = require('../middleware/authMiddleware');
+const dbConnect = require('../utils/dbConnect');
 
 // Sign-up route
 router.post('/signup', async (req, res) => {
   const { email, password } = req.body;
+
+  dbConnect(process.env.DB_CONNECTION_STRING);
 
   try {
     // Check if the user already exists
