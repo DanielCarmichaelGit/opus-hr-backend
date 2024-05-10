@@ -11,7 +11,6 @@ async function dbConnect(auth) {
 
   // Connection URI
   const dbURI = auth;
-
   console.log("database uri", dbURI);
 
   try {
@@ -19,8 +18,6 @@ async function dbConnect(auth) {
     const connection = await mongoose.connect(dbURI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      poolSize: 10,
-      useFindAndModify: false,
     });
 
     connections[auth] = connection;
