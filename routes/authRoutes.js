@@ -4,7 +4,7 @@ const User = require("../models/user");
 const { hashPassword, comparePassword } = require("../utils/passwordUtils");
 const { generateToken } = require("../middleware/authMiddleware");
 const dbConnect = require("../utils/dbConnect");
-const uuidv4 = require("uuidv4");
+const { v4: uuidv4 } = require("uuid");
 
 // Sign-up route
 router.post("/signup", async (req, res) => {

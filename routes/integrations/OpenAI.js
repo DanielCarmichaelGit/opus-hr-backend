@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const OpenAI = require("openai");
-const uuidv4 = require("uuidv4");
+const { v4: uuidv4 } = require("uuid");
 const Avatar = require("../../models/avatar");
 const dbConnect = require("../../utils/dbConnect");
 const { authMiddleware } = require("../../middleware/authMiddleware");
