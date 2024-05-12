@@ -1,5 +1,5 @@
-const router = express.Router();
 const express = require("express");
+const router = express.Router();
 const OpenAI = require("openai");
 const uuidv4 = require("uuidv4");
 const Avatar = require("../../models/avatar");
