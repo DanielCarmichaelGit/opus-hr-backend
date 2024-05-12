@@ -51,7 +51,7 @@ router.post("/generate-avatar", authMiddleware, async (req, res) => {
           console.log(8);
           const image = await openai.images.generate({
             model: "dall-e-3",
-            prompt: `Generate an image of a character, with a white background, that is a ${gender} with a hair color of ${hairColor}. The character should be professional. Also, make the character ${avatarPrompt}`,
+            prompt: `Generate an image of a character, with a white background, that is a ${gender} with a hair color of ${hairColor}. The character should be professional. Also, make the character ${avatarPrompt}. Finally, the image should only contain a human character much like a profile picture. The image should not have color swatches, a background color (other than white), or any text. Only return an image of the character.`,
           });
           console.log(9, image);
 
