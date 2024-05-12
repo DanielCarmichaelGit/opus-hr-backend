@@ -2,8 +2,9 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/user");
 const { hashPassword, comparePassword } = require("../utils/passwordUtils");
-const generateToken = require("../middleware/authMiddleware");
+const { generateToken } = require("../middleware/authMiddleware");
 const dbConnect = require("../utils/dbConnect");
+const uuidv4 = require("uuidv4");
 
 // Sign-up route
 router.post("/signup", async (req, res) => {
@@ -22,7 +23,7 @@ router.post("/signup", async (req, res) => {
     const hashedPassword = await hashPassword(password);
 
     // Create a new user
-    const newUser = new User({ email, password: hashedPassword });
+    const newUser = new User({ user_id: uuidv4(), email, password: hashedPassword });
     await newUser.save();
 
     // Generate and return a JWT token
