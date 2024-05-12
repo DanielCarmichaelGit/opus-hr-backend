@@ -3,48 +3,55 @@ const router = express.Router();
 const OpenAI = require("openai");
 const { v4: uuidv4 } = require("uuid");
 const Avatar = require("../../models/avatar");
+const User = require("../../models/user");
 const dbConnect = require("../../utils/dbConnect");
 const { authMiddleware } = require("../../middleware/authMiddleware");
 
 // Sign-up route
 router.post("/generate-avatar", authMiddleware, async (req, res) => {
   const user_id = req.userId;
-  const { gender, name, hairColor, avatarPrompt, useExisting = false } = req.body;
+  const {
+    gender,
+    name,
+    hairColor,
+    avatarPrompt,
+    useExisting = false,
+  } = req.body;
 
-  console.log(1, req)
+  console.log(1, req);
   if (user_id) {
-    console.log(2)
+    console.log(2);
     dbConnect(process.env.DB_CONNECTION_STRING);
 
     if ((gender, name, hairColor, avatarPrompt)) {
-        console.log(3)
+      console.log(3);
       try {
         // Check if the user already exists
         const existingUser = await User.findOne({ user_id });
-        console.log(4)
+        console.log(4);
         if (!existingUser) {
-            console.log(5)
+          console.log(5);
           return res.status(404).json({ message: "could not find account" });
         }
 
-        console.log(6)
+        console.log(6);
         const existingAvatar = await Avatar.findOne({ owned_by_id: user_id });
 
         const openai = new OpenAI({
           organization: process.env.OPEN_AI_ORG,
           project: process.env.OPEN_AI_PROJECT,
         });
-        console.log(7)
+        console.log(7);
 
         if (existingAvatar && useExisting) {
           // add existing configs to new configs
         } else {
-            console.log(8)
+          console.log(8);
           const image = await openai.images.generate({
             model: "dall-e-3",
             prompt: `Generate an image of a character, with a white background, that is a ${gender} with a hair color of ${hairColor}. The character should be professional. Also, make the character ${avatarPrompt}`,
           });
-          console.log(9)
+          console.log(9);
 
           const new_avatar = new Avatar({
             avatar_id: uuidv4(),
@@ -52,18 +59,18 @@ router.post("/generate-avatar", authMiddleware, async (req, res) => {
             avatar_gender: gender,
             avatar_hair_color: hairColor,
             avatar_image: image,
-            owned_by_id: user_id
+            owned_by_id: user_id,
           });
 
-          console.log(10)
+          console.log(10);
 
           await new_avatar.save();
 
-          console.log(11)
+          console.log(11);
 
           res.status(200).json({
             message: "avatar created",
-            avatar: new_avatar
+            avatar: new_avatar,
           });
         }
       } catch (err) {
@@ -76,8 +83,8 @@ router.post("/generate-avatar", authMiddleware, async (req, res) => {
     }
   } else {
     res.status(409).json({
-        message: "invalid authentication"
-    })
+      message: "invalid authentication",
+    });
   }
 });
 
