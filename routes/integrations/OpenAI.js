@@ -3,7 +3,7 @@ const router = express.Router();
 const OpenAI = require("openai");
 const uuidv4 = require("uuidv4");
 const Avatar = require("../../models/avatar");
-const dbConnect = require("../utils/dbConnect");
+const dbConnect = require("../../utils/dbConnect");
 const { authMiddleware } = require("../../middleware/authMiddleware");
 
 // Sign-up route
