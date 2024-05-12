@@ -11,7 +11,7 @@ router.post("/generate-avatar", authMiddleware, async (req, res) => {
   const user_id = req.userId;
   const { gender, name, hairColor, avatarPrompt, useExisting = false } = req.body;
 
-  console.log(1)
+  console.log(1, req)
   if (user_id) {
     console.log(2)
     dbConnect(process.env.DB_CONNECTION_STRING);
@@ -24,7 +24,7 @@ router.post("/generate-avatar", authMiddleware, async (req, res) => {
         console.log(4)
         if (!existingUser) {
             console.log(5)
-          return res.status(404).json({ message: "Could not find account" });
+          return res.status(404).json({ message: "could not find account" });
         }
 
         console.log(6)
@@ -62,18 +62,22 @@ router.post("/generate-avatar", authMiddleware, async (req, res) => {
           console.log(11)
 
           res.status(200).json({
-            message: "Avatar created",
+            message: "avatar created",
             avatar: new_avatar
           });
         }
       } catch (err) {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: "server error" });
       }
     } else {
       res.status(400).json({
-        message: "Please include all necessary data",
+        message: "please include all necessary data",
       });
     }
+  } else {
+    res.status(409).json({
+        message: "invalid authentication"
+    })
   }
 });
 
