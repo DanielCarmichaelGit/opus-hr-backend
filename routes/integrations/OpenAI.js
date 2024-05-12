@@ -7,7 +7,7 @@ const User = require("../../models/user");
 const dbConnect = require("../../utils/dbConnect");
 const { authMiddleware } = require("../../middleware/authMiddleware");
 
-// Sign-up route
+// create avatar route
 router.post("/generate-avatar", authMiddleware, async (req, res) => {
   const user_id = req.userId;
   const {
@@ -36,6 +36,7 @@ router.post("/generate-avatar", authMiddleware, async (req, res) => {
 
         console.log(6);
         const existingAvatar = await Avatar.findOne({ owned_by_id: user_id });
+        console.log(existingAvatar)
 
         const openai = new OpenAI({
           organization: process.env.OPEN_AI_ORG,
