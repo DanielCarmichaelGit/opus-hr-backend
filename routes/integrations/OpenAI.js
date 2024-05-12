@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { OpenAIApi } = require("openai");
+const OpenAI = require("openai");
 const { v4: uuidv4 } = require("uuid");
 const Avatar = require("../../models/avatar");
 const User = require("../../models/user");
@@ -38,10 +38,10 @@ router.post("/generate-avatar", authMiddleware, async (req, res) => {
         const existingAvatar = await Avatar.findOne({ owned_by_id: user_id });
         console.log(existingAvatar);
 
-        const openai = new OpenAIApi({
-          api_key: process.env.OPEN_AI_KEY,
+        const openai = new OpenAI({
+          apiKey: process.env.OPEN_AI_KEY, // This is also the default, can be omitted
         });
-        
+
         console.log(7);
 
         if (existingAvatar && useExisting) {
