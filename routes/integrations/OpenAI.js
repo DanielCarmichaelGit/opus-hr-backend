@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const router = express.Router();
 const OpenAI = require("openai");
@@ -39,9 +40,7 @@ router.post("/generate-avatar", authMiddleware, async (req, res) => {
         console.log(existingAvatar);
 
         const openai = new OpenAI({
-          apiKey: process.env.OPEN_AI_KEY, // This is also the default, can be omitted
-          organization: process.env.OPEN_AI_ORG,
-          project: process.env.OPEN_AI_PROJECT,
+          apiKey: process.env.OPENAI_API_KEY,
         });
 
         console.log(7);
