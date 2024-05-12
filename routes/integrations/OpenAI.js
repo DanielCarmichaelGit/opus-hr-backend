@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const router = express.Router();
-const OpenAI = require("openai");
+const OpenAI = require('openai');
 const { v4: uuidv4 } = require("uuid");
 const Avatar = require("../../models/avatar");
 const User = require("../../models/user");
@@ -55,8 +55,9 @@ router.post("/generate-avatar", authMiddleware, async (req, res) => {
           });
           console.log(9);
 
+          const avatar_id = uuidv4();
           const new_avatar = new Avatar({
-            avatar_id: uuidv4(),
+            avatar_id,
             avatar_name: name,
             avatar_gender: gender,
             avatar_hair_color: hairColor,
