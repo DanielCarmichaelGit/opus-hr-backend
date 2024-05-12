@@ -61,7 +61,7 @@ router.post("/generate-avatar", authMiddleware, async (req, res) => {
             avatar_name: name,
             avatar_gender: gender,
             avatar_hair_color: hairColor,
-            avatar_image: image,
+            avatar_image: image.data[0].url,
             owned_by_id: user_id,
           });
 
