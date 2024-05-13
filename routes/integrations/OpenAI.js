@@ -7,63 +7,74 @@ const Avatar = require("../../models/avatar");
 const User = require("../../models/user");
 const dbConnect = require("../../utils/dbConnect");
 const { authMiddleware } = require("../../middleware/authMiddleware");
-const io = require('../../server'); // Import the io instance
+const io = require("../../server"); // Import the io instance
 
 router.post("/generate-test", authMiddleware, async (req, res) => {
-    const user_id = req.userId;
-    const { prompt } = req.body;
+  const user_id = req.userId;
+  const { prompt } = req.body;
 
-    if (!user_id) {
-        return res.status(409).json({ message: "invalid authentication" });
-    }
+  if (!user_id) {
+    return res.status(409).json({ message: "invalid authentication" });
+  }
 
-    console.log('Received request:', req.body);
-    dbConnect(process.env.DB_CONNECTION_STRING);
+  console.log("Received request:", req.body);
+  dbConnect(process.env.DB_CONNECTION_STRING);
 
-    if (!prompt) {
-        return res.status(400).json({ message: "please include all necessary data" });
-    }
+  if (!prompt) {
+    return res
+      .status(400)
+      .json({ message: "please include all necessary data" });
+  }
 
-    console.log('Database connected, creating OpenAI instance...');
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  console.log("Database connected, creating OpenAI instance...");
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    try {
-        console.log('Creating thread...');
-        const thread = await openai.beta.threads.create({
-            messages: [
-                { role: "user", content: JSON.stringify(prompt) }
-            ]
-        });
+  // Immediately respond to the HTTP request indicating that the process has started
+  res
+    .status(202)
+    .json({
+      message: "Test creation in progress. Results will be sent via socket.",
+    });
 
-        console.log('Running assistant...');
-        const run = await openai.beta.threads.runs.create(thread.id, {
-            assistant_id: process.env.OPEN_AI_TEST_ASSISTANT,
-        });
+  try {
+    console.log("Creating thread...");
+    const thread = await openai.beta.threads.create({
+      messages: [{ role: "user", content: JSON.stringify(prompt) }],
+    });
 
-        console.log('Fetching messages...');
-        if (run.status === 'completed') {
-            const messages = await openai.beta.threads.messages.list(run.thread_id);
-            console.log('Messages:', messages.data);
-            
-            io.emit('testCreated', {
-                message: "test created",
-                details: messages.data.map(msg => msg.content[0].text.value)
-            }); // Emit to all clients
+    console.log("Running assistant...");
+    const run = await openai.beta.threads.runs.create(thread.id, {
+      assistant_id: process.env.OPEN_AI_TEST_ASSISTANT,
+    });
 
-            res.status(200).json({
-                message: "test created",
-                details: messages.data.map(msg => msg.content[0].text.value)
-            });
+    console.log("Fetching messages...");
+    // Check periodically or use an event-based approach if the API supports it
+    const interval = setInterval(async () => {
+      const updatedRun = await openai.beta.threads.runs.retrieve(run.id);
+
+      if (updatedRun.status !== "queued" && updatedRun.status !== "running") {
+        clearInterval(interval);
+        if (updatedRun.status === "completed") {
+          const messages = await openai.beta.threads.messages.list(
+            run.thread_id
+          );
+          console.log("Messages:", messages.data);
+
+          io.emit("testCreated", {
+            message: "test created",
+            details: messages.data.map((msg) => msg.content[0].text.value),
+          });
         } else {
-            console.log('Run status:', run.status);
-            res.status(200).json({
-                message: "test created with status: " + run.status
-            });
+          io.emit("testFailed", {
+            message: "Test creation failed with status: " + updatedRun.status,
+          });
         }
-    } catch (err) {
-        console.error('Error during API interaction:', err);
-        res.status(500).json({ message: "server error", error: err.message });
-    }
+      }
+    }, 5000); // Check every 5 seconds
+  } catch (err) {
+    console.error("Error during API interaction:", err);
+    io.emit("testFailed", { message: "server error", error: err.message });
+  }
 });
 
 // create avatar route
