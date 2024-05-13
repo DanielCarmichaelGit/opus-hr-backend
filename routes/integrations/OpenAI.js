@@ -101,7 +101,7 @@ router.post("/generate-test", authMiddleware, async (req, res) => {
     console.log(2);
     dbConnect(process.env.DB_CONNECTION_STRING);
 
-    if ((jobDescription, seniorityLevel, preConfigs)) {
+    if ((prompt)) {
       console.log(3);
       try {
         // Check if the user already exists
