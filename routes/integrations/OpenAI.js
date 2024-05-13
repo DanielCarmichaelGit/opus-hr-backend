@@ -93,20 +93,27 @@ router.post("/generate-avatar", authMiddleware, async (req, res) => {
 
 router.post("/generate-test", authMiddleware, async (req, res) => {
   const user_id = req.userId;
-  const { prompt } = req.body;
+  const { prompt } = req.body;  // Ensure prompt is structured correctly as received
 
   if (!user_id) {
-    return res.status(409).json({ message: "invalid authentication" });
+    return res.status(409).json({
+      message: "invalid authentication",
+    });
   }
 
   console.log('Received request:', req.body);
   dbConnect(process.env.DB_CONNECTION_STRING);
 
   if (!prompt) {
-    return res.status(400).json({ message: "please include all necessary data" });
+    return res.status(400).json({
+      message: "please include all necessary data",
+    });
   }
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  console.log('Database connected, creating OpenAI instance...');
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
 
   try {
     console.log('Creating thread...');
@@ -124,24 +131,22 @@ router.post("/generate-test", authMiddleware, async (req, res) => {
       assistant_id: process.env.OPEN_AI_TEST_ASSISTANT,
     });
 
-    console.log('Polling for completion...', run);
-    let completed = false;
-    while (!completed) {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Poll every second
-      const checkRun = await openai.beta.threads.runs.retrieve(run.id);
-      if (checkRun.status === 'completed' || checkRun.status === 'failed') {
-        completed = true;
-        console.log('Fetching messages...');
-        const messages = await openai.beta.threads.messages.list(run.thread_id);
-        console.log('Messages:', messages.data);
-        for (const message of messages.data.reverse()) {
-          console.log(`${message.role} > ${message.content[0].text.value}`);
-        }
-        res.status(200).json({
-          message: "test created",
-          details: messages.data.map(msg => msg.content[0].text.value)
-        });
+    console.log('Fetching messages...');
+    if (run.status === 'completed') {
+      const messages = await openai.beta.threads.messages.list(run.thread_id);
+      console.log('Messages:', messages.data);
+      for (const message of messages.data.reverse()) {
+        console.log(`${message.role} > ${message.content[0].text.value}`);
       }
+      res.status(200).json({
+        message: "test created",
+        details: messages.data.map(msg => msg.content[0].text.value)
+      });
+    } else {
+      console.log('Run status:', run.status);
+      res.status(200).json({
+        message: "test created with status: " + run.status
+      });
     }
   } catch (err) {
     console.error('Error during API interaction:', err);
