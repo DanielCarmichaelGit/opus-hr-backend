@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const router = express.Router();
-const OpenAI = require('openai');
+const OpenAI = require("openai");
 const { v4: uuidv4 } = require("uuid");
 const Avatar = require("../../models/avatar");
 const User = require("../../models/user");
@@ -76,6 +76,74 @@ router.post("/generate-avatar", authMiddleware, async (req, res) => {
             avatar: new_avatar,
           });
         }
+      } catch (err) {
+        res.status(500).json({ message: "server error" });
+      }
+    } else {
+      res.status(400).json({
+        message: "please include all necessary data",
+      });
+    }
+  } else {
+    res.status(409).json({
+      message: "invalid authentication",
+    });
+  }
+});
+
+// create avatar route
+router.post("/generate-test", authMiddleware, async (req, res) => {
+  const user_id = req.userId;
+  const { prompt } = req.body;
+
+  console.log(1, req);
+  if (user_id) {
+    console.log(2);
+    dbConnect(process.env.DB_CONNECTION_STRING);
+
+    if ((jobDescription, seniorityLevel, preConfigs)) {
+      console.log(3);
+      try {
+        // Check if the user already exists
+        const existingUser = await User.findOne({ user_id });
+        console.log(4);
+        if (!existingUser) {
+          console.log(5);
+          return res.status(404).json({ message: "could not find account" });
+        }
+
+        const openai = new OpenAI({
+          apiKey: process.env.OPENAI_API_KEY,
+        });
+
+        // create thread
+        const thread = await openai.beta.threads.create();
+
+        // create thread message
+        const message = await openai.beta.threads.messages.create(thread.id, {
+          role: "user",
+          content: prompt,
+        });
+
+        // run thread using asistant
+        let run = await openai.beta.threads.runs.createAndPoll(thread.id, {
+          assistant_id: process.env.OPEN_AI_TEST_ASSISTANT,
+        });
+
+        if (run.status === 'completed') {
+          const messages = await openai.beta.threads.messages.list(
+            run.thread_id
+          );
+          for (const message of messages.data.reverse()) {
+            console.log(`${message.role} > ${message.content[0].text.value}`);
+          }
+        } else {
+          console.log(run.status);
+        }
+
+        res.status(200).json({
+          message: "test created"
+        });
       } catch (err) {
         res.status(500).json({ message: "server error" });
       }
