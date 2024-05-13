@@ -7,9 +7,9 @@ const Avatar = require("../../models/avatar");
 const User = require("../../models/user");
 const dbConnect = require("../../utils/dbConnect");
 const { authMiddleware } = require("../../middleware/authMiddleware");
-const io = require("../../server"); // Import the io instance
+const { attachIO } = require("../../middleware/socketMiddleware")
 
-router.post("/generate-test", authMiddleware, async (req, res) => {
+router.post("/generate-test", authMiddleware, attachIO, async (req, res) => {
   const user_id = req.userId;
   const { prompt } = req.body;
 
