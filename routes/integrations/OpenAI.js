@@ -50,7 +50,7 @@ router.post("/generate-test", authMiddleware, async (req, res) => {
     console.log("Fetching messages...");
     // Check periodically or use an event-based approach if the API supports it
     const interval = setInterval(async () => {
-      const updatedRun = await openai.beta.threads.runs.retrieve(run.id);
+      const updatedRun = await openai.beta.threads.runs.retrieve(thread.id);
 
       if (updatedRun.status !== "queued" && updatedRun.status !== "running") {
         clearInterval(interval);
