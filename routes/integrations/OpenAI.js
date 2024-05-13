@@ -130,7 +130,7 @@ router.post("/generate-test", authMiddleware, async (req, res) => {
 
         console.log(9)
         // run thread using asistant
-        let run = await openai.beta.threads.runs.createAndPoll(thread.id, {
+        let run = await openai.beta.threads.runs.create(thread.id, {
           assistant_id: process.env.OPEN_AI_TEST_ASSISTANT,
         });
 
