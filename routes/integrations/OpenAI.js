@@ -119,7 +119,7 @@ router.post("/generate-test", authMiddleware, async (req, res) => {
       assistant_id: process.env.OPEN_AI_TEST_ASSISTANT,
     });
 
-    console.log('Polling for completion...');
+    console.log('Polling for completion...'. run);
     let completed = false;
     while (!completed) {
       await new Promise(resolve => setTimeout(resolve, 1000)); // Poll every second
