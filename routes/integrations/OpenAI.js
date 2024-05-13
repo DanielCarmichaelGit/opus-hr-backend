@@ -56,6 +56,7 @@ router.post("/generate-test", authMiddleware, async (req, res) => {
       )
 
       console.log("UPDATED RUN", updatedRun)
+      console.log("LOGGING REQUEST", req)
 
       if (updatedRun.status !== "queued" && updatedRun.status !== "running") {
         clearInterval(interval);
