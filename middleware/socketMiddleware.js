@@ -1,17 +1,18 @@
 const { Server } = require("socket.io");
-const http = require('http');
-const server = require('../server'); // Ensure this import makes sense based on your actual setup
+const http = require("http");
+const { server } = require("../server"); // Make sure 'server' is correctly exported and imported
+const { io } = require("../server");
 
 const io = new Server(server, {
   cors: {
     origin: "*", // Adjust in production
-    methods: ["GET", "POST"]
-  }
+    methods: ["GET", "POST"],
+  },
 });
 
 function attachIo(req, res, next) {
-    req.io = io;
-    next();
+  req.io = io; // Ensure 'io' is defined here as imported from 'server.js'
+  next();
 }
 
-module.exports = { attachIo, io };
+module.exports = { server, io };
