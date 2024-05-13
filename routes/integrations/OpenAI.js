@@ -121,7 +121,7 @@ router.post("/generate-test", authMiddleware, async (req, res) => {
       messages: [
         {
           role: "user",
-          content: prompt,
+          content: JSON.stringify(prompt),
         }
       ]
     });
