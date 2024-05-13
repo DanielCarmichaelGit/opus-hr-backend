@@ -65,12 +65,12 @@ router.post("/generate-test", authMiddleware, async (req, res) => {
           );
           console.log("Messages:", messages.data);
 
-          io.emit("testCreated", {
+          req.io.emit("testCreated", {
             message: "test created",
             details: messages.data.map((msg) => msg.content[0].text.value),
           });
         } else {
-          io.emit("testFailed", {
+          req.io.emit("testFailed", {
             message: "Test creation failed with status: " + updatedRun.status,
           });
         }
@@ -78,7 +78,7 @@ router.post("/generate-test", authMiddleware, async (req, res) => {
     }, 5000); // Check every 5 seconds
   } catch (err) {
     console.error("Error during API interaction:", err);
-    io.emit("testFailed", { message: "server error", error: err.message });
+    req.io.emit("testFailed", { message: "server error", error: err.message });
   }
 });
 
