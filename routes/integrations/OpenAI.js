@@ -37,20 +37,23 @@ router.post("/generate-test", authMiddleware, async (req, res) => {
     });
 
   try {
-    console.log("Creating thread...");
-    const thread = await openai.beta.threads.create({
-      messages: [{ role: "user", content: JSON.stringify(prompt) }],
-    });
-
     console.log("Running assistant...");
-    const run = await openai.beta.threads.runs.create(thread.id, {
+    const run = await openai.beta.threads.createAndRun({
       assistant_id: process.env.OPEN_AI_TEST_ASSISTANT,
+      thread: {
+        messages: [
+          { role: "user", content: JSON.stringify(prompt) },
+        ],
+      },
     });
 
     console.log("Fetching messages...");
     // Check periodically or use an event-based approach if the API supports it
     const interval = setInterval(async () => {
-      const updatedRun = await openai.beta.threads.runs.retrieve(run.id);
+      const updatedRun = await openai.beta.threads.runs.retrieve(
+        run.thread_id,
+        run.id
+      )
 
       if (updatedRun.status !== "queued" && updatedRun.status !== "running") {
         clearInterval(interval);
