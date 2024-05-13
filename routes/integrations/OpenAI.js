@@ -112,33 +112,41 @@ router.post("/generate-test", authMiddleware, async (req, res) => {
           return res.status(404).json({ message: "could not find account" });
         }
 
+        console.log(6)
         const openai = new OpenAI({
           apiKey: process.env.OPENAI_API_KEY,
         });
 
+        console.log(7)
         // create thread
         const thread = await openai.beta.threads.create();
 
+        console.log(8)
         // create thread message
         const message = await openai.beta.threads.messages.create(thread.id, {
           role: "user",
           content: prompt,
         });
 
+        console.log(9)
         // run thread using asistant
         let run = await openai.beta.threads.runs.createAndPoll(thread.id, {
           assistant_id: process.env.OPEN_AI_TEST_ASSISTANT,
         });
 
+        console.log(10)
         if (run.status === 'completed') {
           const messages = await openai.beta.threads.messages.list(
             run.thread_id
           );
+          console.log(11)
           for (const message of messages.data.reverse()) {
             console.log(`${message.role} > ${message.content[0].text.value}`);
+            console.log(12)
           }
         } else {
           console.log(run.status);
+          console.log(13)
         }
 
         res.status(200).json({
