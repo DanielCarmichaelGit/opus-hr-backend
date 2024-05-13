@@ -40,5 +40,7 @@ io.on('connection', (socket) => {
   });
 });
 
+module.exports.io = io;
+
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server started on port ${PORT}`));
