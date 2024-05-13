@@ -119,13 +119,13 @@ router.post("/generate-test", authMiddleware, async (req, res) => {
 
         console.log(7)
         // create thread
-        const thread = await openai.beta.threads.create();
-
-        console.log(8)
-        // create thread message
-        const message = await openai.beta.threads.messages.create(thread.id, {
-          role: "user",
-          content: prompt,
+        const thread = await openai.beta.threads.create({
+          messages: [
+            {
+              "role": "user",
+              "content": prompt,
+            }
+          ]
         });
 
         console.log(9)
