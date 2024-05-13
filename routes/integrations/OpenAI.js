@@ -91,80 +91,68 @@ router.post("/generate-avatar", authMiddleware, async (req, res) => {
   }
 });
 
-// create avatar route
 router.post("/generate-test", authMiddleware, async (req, res) => {
   const user_id = req.userId;
-  const { prompt } = req.body;
+  const { prompt } = req.body;  // Ensure prompt is structured correctly as received
 
-  console.log(1, req);
-  if (user_id) {
-    console.log(2);
-    dbConnect(process.env.DB_CONNECTION_STRING);
-
-    if ((prompt)) {
-      console.log(3);
-      try {
-        // Check if the user already exists
-        const existingUser = await User.findOne({ user_id });
-        console.log(4);
-        if (!existingUser) {
-          console.log(5);
-          return res.status(404).json({ message: "could not find account" });
-        }
-
-        console.log(6)
-        const openai = new OpenAI({
-          apiKey: process.env.OPENAI_API_KEY,
-        });
-
-        console.log(7)
-        // create thread
-        const thread = await openai.beta.threads.create({
-          messages: [
-            {
-              "role": "user",
-              "content": prompt,
-            }
-          ]
-        });
-
-        console.log(9)
-        // run thread using asistant
-        let run = await openai.beta.threads.runs.create(thread.id, {
-          assistant_id: process.env.OPEN_AI_TEST_ASSISTANT,
-        });
-
-        console.log(10)
-        if (run.status === 'completed') {
-          const messages = await openai.beta.threads.messages.list(
-            run.thread_id
-          );
-          console.log(11)
-          for (const message of messages.data.reverse()) {
-            console.log(`${message.role} > ${message.content[0].text.value}`);
-            console.log(12)
-          }
-        } else {
-          console.log(run.status);
-          console.log(13)
-        }
-
-        res.status(200).json({
-          message: "test created"
-        });
-      } catch (err) {
-        res.status(500).json({ message: "server error" });
-      }
-    } else {
-      res.status(400).json({
-        message: "please include all necessary data",
-      });
-    }
-  } else {
-    res.status(409).json({
+  if (!user_id) {
+    return res.status(409).json({
       message: "invalid authentication",
     });
   }
+
+  console.log('Received request:', req.body);
+  dbConnect(process.env.DB_CONNECTION_STRING);
+
+  if (!prompt) {
+    return res.status(400).json({
+      message: "please include all necessary data",
+    });
+  }
+
+  console.log('Database connected, creating OpenAI instance...');
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  try {
+    console.log('Creating thread...');
+    const thread = await openai.beta.threads.create({
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        }
+      ]
+    });
+
+    console.log('Running assistant...');
+    const run = await openai.beta.threads.runs.create(thread.id, {
+      assistant_id: process.env.OPEN_AI_TEST_ASSISTANT,
+    });
+
+    console.log('Fetching messages...');
+    if (run.status === 'completed') {
+      const messages = await openai.beta.threads.messages.list(run.thread_id);
+      console.log('Messages:', messages.data);
+      for (const message of messages.data.reverse()) {
+        console.log(`${message.role} > ${message.content[0].text.value}`);
+      }
+      res.status(200).json({
+        message: "test created",
+        details: messages.data.map(msg => msg.content[0].text.value)
+      });
+    } else {
+      console.log('Run status:', run.status);
+      res.status(200).json({
+        message: "test created with status: " + run.status
+      });
+    }
+  } catch (err) {
+    console.error('Error during API interaction:', err);
+    res.status(500).json({ message: "server error", error: err.message });
+  }
 });
+
 
 module.exports = router;
