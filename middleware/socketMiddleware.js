@@ -1,7 +1,6 @@
 const { Server } = require("socket.io");
 const http = require("http");
-const { server } = require("../server"); // Make sure 'server' is correctly exported and imported
-const { io } = require("../server");
+const { server } = require("../server");
 
 const io = new Server(server, {
   cors: {
@@ -10,9 +9,10 @@ const io = new Server(server, {
   },
 });
 
-function attachIo(req, res, next) {
-  req.io = io; // Ensure 'io' is defined here as imported from 'server.js'
+// Middleware function to attach the socket.io instance to the request object
+const attachIO = (req, res, next) => {
+  req.io = io;
   next();
-}
+};
 
-module.exports = { server, io };
+module.exports = { attachIO };

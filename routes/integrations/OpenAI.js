@@ -7,79 +7,81 @@ const Avatar = require("../../models/avatar");
 const User = require("../../models/user");
 const dbConnect = require("../../utils/dbConnect");
 const { authMiddleware } = require("../../middleware/authMiddleware");
-const { attachIO } = require("../../middleware/socketMiddleware")
 
-router.post("/generate-test", authMiddleware, attachIO, async (req, res) => {
+router.post("/generate-test", authMiddleware, async (req, res) => {
   const user_id = req.userId;
   const { prompt } = req.body;
-
   if (!user_id) {
     return res.status(409).json({ message: "invalid authentication" });
   }
-
   console.log("Received request:", req.body);
   dbConnect(process.env.DB_CONNECTION_STRING);
-
   if (!prompt) {
     return res
       .status(400)
       .json({ message: "please include all necessary data" });
   }
-
   console.log("Database connected, creating OpenAI instance...");
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   // Immediately respond to the HTTP request indicating that the process has started
-  res
-    .status(202)
-    .json({
-      message: "Test creation in progress. Results will be sent via socket.",
-    });
+  res.status(202).json({
+    message: "Test creation in progress. Results will be sent via socket.",
+  });
 
   try {
     console.log("Running assistant...");
     const run = await openai.beta.threads.createAndRun({
       assistant_id: process.env.OPEN_AI_TEST_ASSISTANT,
       thread: {
-        messages: [
-          { role: "user", content: JSON.stringify(prompt) },
-        ],
+        messages: [{ role: "user", content: JSON.stringify(prompt) }],
       },
     });
-
     console.log("Fetching messages...");
-    // Check periodically or use an event-based approach if the API supports it
-    const interval = setInterval(async () => {
-      const updatedRun = await openai.beta.threads.runs.retrieve(
-        run.thread_id,
-        run.id
-      )
 
-      console.log("UPDATED RUN", updatedRun)
-      console.log("LOGGING REQUEST", req)
+    const checkRunStatus = async () => {
+      while (true) {
+        const updatedRun = await openai.beta.threads.runs.retrieve(
+          run.thread_id,
+          run.id
+        );
 
-      if (updatedRun.status !== "queued" && updatedRun.status !== "running") {
-        clearInterval(interval);
         if (updatedRun.status === "completed") {
+          console.log("OpenAI run completed successfully!");
+          let assistantResponse = {};
           const messages = await openai.beta.threads.messages.list(
             run.thread_id
           );
-          console.log("Messages:", messages.data);
-
-          req.io.emit("testCreated", {
-            message: "test created",
-            details: messages.data.map((msg) => msg.content[0].text.value),
-          });
+          for (const message of messages.data.reverse()) {
+            if (message.role === "assistant") {
+              assistantResponse = message.content[0].text.value
+            }
+          }
+    
+          if (assistantResponse) {
+            console.log("ASSISTANT'S RESPONSE FOUND", assistantResponse)
+            // Emit the assistant's response using the socket connection
+            // req.io.emit("assistantResponse", { response: assistantResponse });
+          } else {
+            console.log("No assistant response found in the messages.");
+          }
+          break;
+        } else if (updatedRun.status !== "queued" || updatedRun.status !== "in_progress") {
+          console.log("Waiting for run to complete...");
+          console.log("CURRENT STATUS", updatedRun.status)
+          console.log(Date.now())
+          await new Promise((resolve) => setTimeout(resolve, 5000));
         } else {
-          req.io.emit("testFailed", {
-            message: "Test creation failed with status: " + updatedRun.status,
-          });
-        }
+          console.log(`OpenAI run failed with status: ${updatedRun.status}`);
+          break;
+        } 
       }
-    }, 5000); // Check every 5 seconds
+    };
+
+    checkRunStatus();
   } catch (err) {
     console.error("Error during API interaction:", err);
-    req.io.emit("testFailed", { message: "server error", error: err.message });
+    // req.io.emit("testFailed", { message: "server error", error: err.message });
   }
 });
 
